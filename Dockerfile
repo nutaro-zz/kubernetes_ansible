@@ -1,8 +1,12 @@
 FROM ubuntu:focal
 
+
 RUN apt update -y
 RUN apt upgrade -y
-RUN apt install curl -y
-RUN curl -LO "https://dl.k8s.io/release/v1.20.4/bin/linux/amd64/kubectl"
-RUN curl -LO "https://dl.k8s.io/release/v1.20.4/bin/linux/amd64/kubectl.sha256"
-RUN install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+RUN apt install apt-transport-https curl vim gnupg2 -y
+RUN curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+RUN cat <<EOF | tee /etc/apt/sources.list.d/kubernetes.list \
+deb https://apt.kubernetes.io/ kubernetes-xenial main\
+EOF\
+RUN apt update
+RUN apt install kubelet kubeadm kubectl -y
