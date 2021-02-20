@@ -1,0 +1,18 @@
+version: "3.9"
+services:
+#  docker:
+#    container_name: docker
+#    image: library/docker:20.10.3
+#    volumes:
+#    - docker-certs-ca:/certs/ca
+#    - docker-certs-client:/certs/client
+
+  control-panel:
+    container_name: "control-panel"
+    build: .
+    command: "tail -f /dev/null"
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+networks:
+  docker:
+    driver: "bridge"
