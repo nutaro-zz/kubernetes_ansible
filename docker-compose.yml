@@ -1,18 +1,26 @@
 version: "3.9"
 services:
-#  docker:
-#    container_name: docker
-#    image: library/docker:20.10.3
-#    volumes:
-#    - docker-certs-ca:/certs/ca
-#    - docker-certs-client:/certs/client
-
-  control-panel:
-    container_name: "control-panel"
+  controlpanel:
+    container_name: "controlpanel"
     build: .
     command: "tail -f /dev/null"
+    networks:
+      controlpanel:
+        ipv4_address: 172.16.238.10
+        ipv6_address: "2001:3984:3989::10"
+    ports:
+    - "8080:80"
     volumes:
     - /var/run/docker.sock:/var/run/docker.sock
+    - ./etc/:/etc
+
 networks:
-  docker:
-    driver: "bridge"
+  controlpanel:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.238.0/24
+          gateway: 172.16.238.1
+        - subnet: "2001:3984:3989::/64"
+          gateway: "2001:3984:3989::1"
