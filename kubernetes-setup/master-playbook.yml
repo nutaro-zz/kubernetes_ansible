@@ -6,7 +6,7 @@
       apt:
         name: "{{ packages }}"
         state: present
-        updated_cache: yes
+        update_cache: yes
       vars:
         packages:
         - apt-transport-https
@@ -16,7 +16,7 @@
         - software-properties-common
 
     - name: Add an apt signing key for Docker
-      apt-key:
+      apt_key:
         url: https://download.docker.com/linux/ubuntu/gpg
         state: present
 
@@ -29,7 +29,7 @@
       apt:
         name: "{{ packages }}"
         state: present
-        updated_cache: yes
+        update_cache: yes
       vars:
         packages:
         - docker-ce
@@ -42,7 +42,7 @@
       user:
         name: vagrant
         group: docker
-    
+
     - name: Remove swapfile from /etc/fstab
       mount:
         name: "{{ item }}"
@@ -60,13 +60,15 @@
       apt_key:
         url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
         state: present
-    
+      register: add_repository_key
+      ignore_errors: "{{ kubernetes_apt_ignore_key_error }}"
+
     - name: adding an apt repository for kubernetes
       apt_repository:
         repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
         state: present
         filename: kubernetes.list
-    
+
     - name: Install Kubernetes binaries
       apt:
         name: "{{ packages }}"
@@ -77,12 +79,12 @@
           - kubelet
           - kubeadm
           - kubectl
-    
+
     - name:
       lineinfile:
         path: /etc/default/kubelet
         line: KUBELET_EXTRA_ARGS=--node-ip={{ node_ip }}
-    
+
     - name: Restart kubelet
       service:
         name: kubelet
@@ -91,11 +93,18 @@
 
     - name: Start Kubernetes cluster using kubeadm
       command: kubeadm init --apiserver-advertise-address="192.168.50.10" --apiserver-cert-extra-sans="192.168.50.10" --node-name k8s-master  --pod-network-cidr=192.168.0.0/16
-    
+
+    - name: Setup kubeconfig for vagrant user
+      command: "{{ item }}"
+      with_items:
+       - mkdir -p /home/vagrant/.kube
+       - cp -i /etc/kubernetes/admin.conf /home/vagrant/.kube/config
+       - chown vagrant:vagrant /home/vagrant/.kube/config
+
     - name: Install calico pod network
       become: false
       command: kubectl create -f https://docs.projectcalico.org/v3.4/getting-started/kubernetes/installation/hosted/calico.yaml
-    
-    handlers:
-      - name: docker status
-        service: name=docker state=started
+
+  handlers:
+    - name: docker status
+      service: name=docker state=started
